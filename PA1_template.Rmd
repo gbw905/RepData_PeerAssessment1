@@ -1,25 +1,202 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PA1_template"
+author: "Greg Watson"
+date: "Wednesday, March 11, 2015"
+output: html_document
 ---
 
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-## Loading and preprocessing the data
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
+    ##
+    ## Assignment for "Reproducible Research", March 2015:
+    ## 1- Load activity data from a CSV file
+    ## 2- Transform the data into a format suitable for analysis
+    ## 3- Calculate mean total number of steps taken per day
+    ##    a. calcuate the total number of steps taken per day
+    ##    b. Make a histogram of the total number steps tane each day
+    ##    c. Calculate and report the mean and median of the total number steps 
+    ##       taken per day
+    ## 4- What is the average daily activity pattern?
+    ##    a. make a time series plot (type = "l") of the 5-minute interval
+    ##       (x-axis) and the average number of steps taken, averaged across
+    ##       all days (y-axis)
+    ##    b. Which 5-minute interval, on average across all the days in the
+    ##       dataset, contains the maximum number of steps?
+    ## 5- Impute missing values
+    ##    a. Report the total number of missing values
+    ##    b. Calculate the mean for each day
+    ##    c. Create a new dataset with each missing value replaced by the 
+    ##       mean for that day
+    ##    d. Make a histogram of the total number of steps taken each day
+    ##       - Calculate mean & median of steps taken per day
+    ##       - Compare to step 3.b: What is the impact of imputing missing data?
+    ## 6- Do weekends matter?
+    ##    a. apply the weekdays() function to create factor "weekday", "weekend" 
+    ##    b. make a time series plot (type = "l") of the 5-minute interval
+    ##       (x-axis) and the average number of steps taken, averaged across
+    ##       all days (y-axis)
+    ##
+    ## Input as described in the submission instructions: 
+    ##    The code should have a file PA1_template.rmd in the master branch 
+    ##    of the GitHub repository. 
+    ##    The activity data will be stored as a CSV file in the same repository
+    ##
+    ## Output: HTML
+    ##
+    
+    ##########################################################################
+    ## Step 1.0 - Load Activity data from CSV
+    ##########################################################################
+    
+```{r}
+    activityUrl <- "activity.csv"
+    activityData <- read.csv(activityUrl)
+```
+    
+    ##########################################################################
+    ## Step 2.0 - Transform the data into a format suitable for analysis
+    ##########################################################################
+    
+No transformation was required    
+    
+    ##########################################################################
+    ## Step 3- Calculate mean total number of steps taken per day
+    ##    a. calcuate the total number of steps taken per day
+    ##    b. Make a histogram of the total number steps taken each day
+    ##    c. Calculate and report the mean and median of the total number steps 
+    ##       taken per day
+    ##########################################################################
+```{r}
+    StepsPerDayTotal <- aggregate(steps ~ date, activityData, sum)
+```
+```{r, echo=FALSE}
+    hist(StepsPerDayTotal$steps, 
+         main="Total steps per day", 
+         xlab="Steps", 
+         ylab="Frequency")
+```
+```{r}
+    StepsPerDayMean <- aggregate(steps ~ date, activityData, mean)
+    StepsPerDay <- merge(StepsPerDayTotal, StepsPerDayMean, by="date")
+    names(StepsPerDay)[2]<-"Total"
+    names(StepsPerDay)[3]<-"Mean"
+```
+    Report of "Steps Per Day, Total & Mean, summarized by day"
+```{r}
+    StepsPerDay
+```
+    ##########################################################################
+    ## Step 4- What is the average daily activity pattern?
+    ##    a. make a time series plot (type = "l") of the 5-minute interval
+    ##       (x-axis) and the average number of steps taken, averaged across
+    ##       all days (y-axis)
+    ##    b. Which 5-minute interval, on average across all the days in the
+    ##       dataset, contains the maximum number of steps?
+    ##########################################################################
+```{r echo=FALSE}
+    plot(activityData$interval, 
+         activityData$steps, 
+         type="l", 
+         main="All Days", 
+         xlab="interval",
+         ylab="steps")
+```
+```{r}
+    StepsPerIntervalMean <- aggregate(steps ~ interval, activityData, mean)
+```
+The 5-minute interval that, on average across all days in the dataset, contains the 
+maximum number of steps is as follows...
+```{r}
+    StepsPerIntervalMean[StepsPerIntervalMean$steps == max(StepsPerIntervalMean$steps),1]
+```
+   
+    ##########################################################################
+    ## step 5- Impute missing values
+    ##    a. Report the total number of missing values
+    ##    b. Calculate the mean for each day
+    ##    c. Create a new dataset with each missing value replaced by the 
+    ##       mean for that day
+    ##    d. Make a histogram of the total number of steps taken each day
+    ##       - Calculate mean & median of steps taken per day
+    ##       - Compare to step 3.b: What is the impact of imputing missing data?
+    ##########################################################################
 
+The total number of missing values is as follows...
+```{r}
+    length(activityData[is.na(activityData$steps),]$steps)
+```
+```{r}
+    activityDataNoNA <- transform(activityData, 
+              steps = ifelse(is.na(steps), 
+                    StepsPerDay[StepsPerDay$date == as.Date(as.character(date)), 3], 
+                    steps)
+              )
+    StepsPerDayTotalNew <- aggregate(steps ~ date, activityDataNoNA, sum)
+```
+```{r, echo=FALSE}
+    par(mfrow=c(1,2))
+    hist(StepsPerDayTotalNew$steps, 
+         main="Total with NA replaced", 
+         xlab="Steps", 
+         ylab="Frequency")
+    hist(StepsPerDayTotal$steps, 
+         main="Total with NA", 
+         xlab="Steps", 
+         ylab="Frequency")
+```
+```{r}
+    StepsPerDayMeanNew <- aggregate(steps ~ date, activityDataNoNA, mean)
+    StepsPerDayNew <- merge(StepsPerDayTotalNew, StepsPerDayMeanNew, by="date")
+    names(StepsPerDayNew)[2]<-"Total"
+    names(StepsPerDayNew)[3]<-"Mean"
+```
+    Report of "Steps Per Day, Total & Mean, summarized by day"
+    with missing values replaced by the mean for the day
+```{r}
+    StepsPerDayNew
+```
+    
+    ##########################################################################
+    ## step 6- Do weekends matter?
+    ##    a. apply the weekdays() function to create factor "weekday", "weekend" 
+    ##    b. make a time series plot (type = "l") of the 5-minute interval
+    ##       (x-axis) and the average number of steps taken, averaged across
+    ##       all days (y-axis)
+    ##########################################################################
+```{r echo=FALSE}
+    ##StepsPerDayWE <- transform(StepsPerDay, 
+    ##    DayType = ifelse(weekdays(as.Date("2015-03-11"), abbreviate=TRUE)=="Sun" 
+    ##                     | weekdays(as.Date("2015-03-11"), abbreviate=TRUE)=="Sat", 
+    ##                     "Weekend", 
+    ##                     "Weekday")
+    ##   )
 
-## What is mean total number of steps taken per day?
+```
+```{r}
+    activityWD <- activityData[
+        weekdays(as.Date(as.character(activityData$date)), abbreviate=TRUE)!="Sun" 
+        & weekdays(as.Date(as.character(activityData$date)), abbreviate=TRUE)!="Sat",]
+    activityWE <- activityData[
+        weekdays(as.Date(as.character(activityData$date)), abbreviate=TRUE)=="Sun" 
+        | weekdays(as.Date(as.character(activityData$date)), abbreviate=TRUE)=="Sat",]
 
+```
+```{r, echo=FALSE}
+    par(mfrow=c(1,2))
+    plot(activityWE$interval, 
+         activityWE$steps, 
+         type="l", 
+         main="Weekend", 
+         xlab="interval",
+         ylab="steps")
+    plot(activityWD$interval, 
+         activityWD$steps, 
+         type="l", 
+         main="Weekday", 
+         xlab ="interval", 
+         ylab="steps")
+```
+    
 
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
